@@ -6,4 +6,5 @@
 - [ ] Game should support offline launch
 - [ ] Add auth / login option
 - [ ] Add an cool looking up
-- [ ] make the version type buttons work
+- [ ] Make the version type buttons work
+- [ ] Add a github workflow to compile the app
