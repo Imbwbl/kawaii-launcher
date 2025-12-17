@@ -5,5 +5,5 @@
 - [ ] Read version manifest from files
 - [ ] Game should support offline launch
 - [ ] Add auth / login option
-- [ ] Add an cool looking up
+- [ ] Add an cool looking ui
 - [ ] make the version type buttons work
