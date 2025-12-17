@@ -1,7 +1,9 @@
+use reqwest::Client;
+use futures::{stream, StreamExt};
 use crate::commands::version::{get_versions, Version};
-use std::{env, fs};
+use std::fs;
 use std::fs::File;
-use std::io::{Read, Seek, SeekFrom, Write, copy};
+use std::io::{Write, copy};
 use std::path::Path;
 use crate::commands::asset::get_assets;
 
@@ -10,11 +12,15 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
         let assets = Path::new("minecraft/assets");
         let assets_index = assets.join(format!("indexes/{}.json", version.assets));
         let assets_objects = assets.join("objects");
+
+        let client = Client::new();
+
         if let Some(parent) = assets_index.parent() {
             if !parent.exists() {
                 fs::create_dir_all(parent).expect("Failed to create parent directory");
             }
         }
+
         let path = assets_objects.as_path();
         if !path.exists() {
             fs::create_dir_all(path).expect("Failed to create parent directory");
@@ -23,7 +29,8 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
             println!("Downloading {}", version.asset_index.url);
 
             // request the bytes
-            let req = reqwest::get(&version.asset_index.url)
+            let req = client.get(&version.asset_index.url)
+                .send()
                 .await
                 .expect("Failed to download library")
                 .bytes()
@@ -31,14 +38,50 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
                 .expect("Failed to download binary");
 
             // create the file
-            let mut file = File::create(assets_index).expect("Failed to create file");
+            let mut file = File::create(&assets_index).expect("Failed to create file");
 
             // write the bytes into the file
             file.write_all(&req).expect("Failed to write to file");
         }
 
         let asset_list = get_assets(version).await;
-        for asset in asset_list.objects.values() {
+        let bodies = stream::iter(asset_list.objects.into_values())
+        .map(|asset| {
+            let client = client.clone();
+            let hash = asset.hash.clone();
+            let value = assets_objects.clone();
+            async move {
+                let two = hash.split_at(2).0;
+                let path = value.join(format!("{}/{}", two, asset.hash));
+                if let Some(parent) = path.parent() {
+                    if !parent.exists() {
+                        fs::create_dir_all(parent).expect("Failed to create parent directory");
+                    }
+                }   
+                let url = format!("https://resources.download.minecraft.net/{}/{}", two, hash);
+                let resp = client.get(&url).send().await.unwrap();
+                resp.bytes().await
+            }
+        })
+        .buffer_unordered(50);
+        bodies
+        .for_each(|b| async {
+            match b {
+                Ok(b) => {
+                        if b.is_empty() {
+                            println!("Skipped existing file");
+                        } else {
+                            println!("Downloaded {} bytes", b.len());
+                            let mut file = File::create(&assets_index).expect("Failed to create file");
+                            file.write_all(&b).expect("Failed to write to file")
+                        }
+                    },
+                Err(e) => eprintln!("Got an error: {}", e),
+            }
+        })
+        .await;
+
+        /*for asset in asset_list.objects.values() {
             let two = asset.hash.split_at(2).0;
             let path = assets_objects.join(format!("{}/{}", two, asset.hash));
             if let Some(parent) = path.parent() {
@@ -64,7 +107,7 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
                 // write the bytes into the file
                 file.write_all(&req).expect("Failed to write to file");
             }
-        }
+        }*/
     })
 }
 
