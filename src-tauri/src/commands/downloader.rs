@@ -1,6 +1,7 @@
 use reqwest::Client;
 use futures::{stream, StreamExt};
 use tokio::io::AsyncWriteExt;
+use crate::commands::launch_game;
 use crate::commands::version::{get_versions, Version};
 use std::fs;
 use std::fs::File;
@@ -10,7 +11,7 @@ use crate::commands::asset::get_assets;
 
 async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
-        let assets = Path::new("minecraft/assets");
+        let assets = Path::new(launch_game::ASSETS_FOLDER);
         let assets_index = assets.join(format!("indexes/{}.json", version.assets));
         let assets_objects = assets.join("objects");
 
@@ -52,7 +53,7 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
             let hash = asset.hash.clone();
             let assets_objects = assets_objects.clone();
             async move {
-                let two = hash.split_at(2).0;
+                let two = &hash[..2];
                 let path = assets_objects.join(format!("{}/{}", two, hash));
                 if path.exists() {
                     return None;
@@ -71,7 +72,7 @@ async fn download_assets(version: Version) -> tauri::async_runtime::JoinHandle<(
                         Ok(response) => {
                             match response.bytes().await {
                                 Ok(b) => {
-                                    let two = hash.split_at(2).0;
+                                    let two = &hash[..2];
                                     let path = assets_objects.join(format!("{}/{}", two, hash));
                                     let path_str =  path.as_path().to_str().expect("Failed to convert path to string");
 
@@ -264,7 +265,7 @@ async fn download_library(version: Version) -> tauri::async_runtime::JoinHandle<
 async fn download_library(version: Version) -> tauri::async_runtime::JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
         let libraries = version.libraries;
-        let path = Path::new("minecraft/libraries");
+        let path = Path::new(launch_game::LIBRARIES_FOLDER);
 
         let client = Client::new();
 
@@ -318,7 +319,7 @@ async fn download_library(version: Version) -> tauri::async_runtime::JoinHandle<
 async fn download_version(version: Version) -> tauri::async_runtime::JoinHandle<()> {
     // new thread with a handle to wait on
     tauri::async_runtime::spawn(async move {
-        let version_folder = Path::new("minecraft/versions");
+        let version_folder = Path::new(launch_game::VERSIONS_FOLDER);
         let path = version_folder.join(format!("{}/{}.jar", version.id, version.id));
         let json_path = version_folder.join(format!("{}/{}.json", version.id, version.id));
 

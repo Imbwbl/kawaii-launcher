@@ -4,13 +4,19 @@ use std::fs;
 use std::path::{absolute, Path};
 use std::process::Command;
 
+pub static GAME_FOLDER: &str = "minecraft";
+pub static LIBRARIES_FOLDER: &str = "minecraft/libraries";
+pub static ASSETS_FOLDER: &str = "minecraft/assets";
+pub static VERSIONS_FOLDER: &str = "minecraft/versions";
+pub static NATIVES_FOLDER: &str = "minecraft/bin";
+
 fn create_folders() {
     let folders = [
-        "minecraft",
-        "minecraft/assets",
-        "minecraft/libraries",
-        "minecraft/versions",
-        "minecraft/bin",
+        GAME_FOLDER,
+        LIBRARIES_FOLDER,
+        ASSETS_FOLDER,
+        VERSIONS_FOLDER,
+        NATIVES_FOLDER,
     ];
     for folder in folders {
         if !Path::new(folder).exists() {
@@ -43,20 +49,15 @@ pub async fn launch_game(username: String, version: String) {
         username,
         version.clone()
     );
-    let base_folder = "minecraft/";
-    let library_folder = "minecraft/libraries";
-    let assets_folder = "minecraft/assets";
-    let version_folder = "minecraft/versions";
-    let natives_folder = "minecraft/bin";
     let version = get_version(version).await;
-    let libraries = get_libraries(Path::new(library_folder));
+    let libraries = get_libraries(Path::new(LIBRARIES_FOLDER));
     let _separator = ":";
     #[cfg(target_os = "windows")]
     let _separator = ";";
 
     let classpath = format!(
         "{}/{}/{}.jar{}{}",
-        version_folder,
+        VERSIONS_FOLDER,
         &version.id,
         &version.id,
         _separator,
@@ -75,10 +76,10 @@ pub async fn launch_game(username: String, version: String) {
         "-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump", 
         #[cfg(target_arch = "x86")]
         "-Xss1M",
-        &format!("-Djava.library.path={}", natives_folder),
-        &format!("-Djna.tmpdir={}", natives_folder),
-        &format!("-Dorg.lwjgl.system.SharedLibraryExtractPath={}", natives_folder),
-        &format!("-Dio.netty.native.workdir={}", natives_folder),
+        &format!("-Djava.library.path={}", NATIVES_FOLDER),
+        &format!("-Djna.tmpdir={}", NATIVES_FOLDER),
+        &format!("-Dorg.lwjgl.system.SharedLibraryExtractPath={}", NATIVES_FOLDER),
+        &format!("-Dio.netty.native.workdir={}", NATIVES_FOLDER),
         &format!("-Dminecraft.launcher.brand={}", "Kawaii"),
         &format!("-Dminecraft.launcher.version={}", 100),
         "-cp",
@@ -89,9 +90,9 @@ pub async fn launch_game(username: String, version: String) {
         "--version",
         &version.id,
         "--gameDir",
-        base_folder,
+        GAME_FOLDER,
         "--assetsDir",
-        assets_folder,
+        ASSETS_FOLDER,
         "--assetIndex",
         &version.asset_index.id,
         "--uuid",
