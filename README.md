@@ -1,5 +1,5 @@
 # Kawaii Launcher
-### todo
+### To-Do list
 - [ ] Download natives libraries
 - [x] Add parrallel downloading for libraries and **assets**
 - [ ] Read version manifest from files
@@ -8,3 +8,4 @@
 - [ ] Add an cool looking ui
 - [ ] Make the version type buttons work
 - [ ] Add file integrity check
+- [ ] See a therapist
