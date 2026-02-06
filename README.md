@@ -1,10 +1,10 @@
 # Kawaii Launcher
 ### todo
-- [ ] Download natives libraries
-- [x] Add parrallel downloading for libraries and **assets**
-- [ ] Read version manifest from files
-- [ ] Game should support offline launch
+- [ ] Download native libraries
+- [x] Add parallel downloading for libraries and **assets**
+- [ ] Read version manifests from files
+- [ ] Game should support offline launching
 - [ ] Add auth / login option
-- [ ] Add an cool looking ui
+- [ ] Add a cool-looking UI
 - [ ] Make the version type buttons work
-- [ ] Add file integrity check
+- [ ] Add file integrity checks
